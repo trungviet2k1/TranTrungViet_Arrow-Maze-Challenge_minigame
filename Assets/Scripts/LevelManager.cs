@@ -12,10 +12,10 @@ public class LevelManager : MonoBehaviour
         for (int i = 0; i < levelButtons.Length; i++)
         {
             int levelNumber = i + 1;
-            Image lockImage = levelButtons[i].GetComponentInChildren<Image>();
+            //Image lockImage = levelButtons[i].GetComponentInChildren<Image>();
             TextMeshProUGUI levelText = levelButtons[i].GetComponentInChildren<TextMeshProUGUI>();
 
-            if (levelText != null && lockImage != null)
+            if (levelText != null /*&& lockImage != null*/)
             {
                 if (levelNumber == 1)
                 {
@@ -27,13 +27,13 @@ public class LevelManager : MonoBehaviour
 
                     if (isUnlocked)
                     {
-                        lockImage.gameObject.SetActive(false);
-                        levelText.gameObject.SetActive(true);
+                        /*lockImage.gameObject.SetActive(false);
+                        levelText.gameObject.SetActive(true);*/
                         levelText.text = levelNumber.ToString();
                     }
                     else
                     {
-                        lockImage.gameObject.SetActive(true);
+                        /*lockImage.gameObject.SetActive(true);*/
                         levelText.gameObject.SetActive(false);
                     }
                 }

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 public class GameManagement : MonoBehaviour
 {
-    public static GameManagement Instance { get; set; }
+    public static GameManagement Instance { get; private set; }
 
     [Header("GameUI")]
     public TextMeshProUGUI levelText;
@@ -26,6 +26,9 @@ public class GameManagement : MonoBehaviour
     private float timeRemaining;
     private bool timerRunning;
     private bool gameWon;
+    private bool isMoving = false;
+    private bool canMoveHorizontally = false;
+    private bool isChangingDirection = false;
 
     void Awake()
     {
@@ -45,22 +48,27 @@ public class GameManagement : MonoBehaviour
     void Start()
     {
         SetupGame();
-        arrowTile.GetComponent<Button>().onClick.AddListener(MoveArrowTile);
     }
 
-    void SetupGame()
+    public void SetupGame()
     {
         arrowPositionIndex = -1;
         timeRemaining = 45f;
         timerRunning = true;
         gameWon = false;
+        canMoveHorizontally = false;
+        isChangingDirection = false;
 
         if (arrowTile != null)
         {
             Destroy(arrowTile);
         }
 
-        arrowTile = Instantiate(arrowTilePrefab, gridContainer.GetChild(arrowPositionIndex + 1).position, Quaternion.identity, gridContainer);
+        if (gridContainer.childCount > 0)
+        {
+            arrowTile = Instantiate(arrowTilePrefab, gridContainer.GetChild(arrowPositionIndex + 1).position, Quaternion.identity, gridContainer);
+            arrowTile.GetComponent<Button>().onClick.AddListener(CheckArrowMovement);
+        }
 
         winPanel.SetActive(false);
         losePanel.SetActive(false);
@@ -115,6 +123,19 @@ public class GameManagement : MonoBehaviour
         PlayerPrefs.Save();
     }
 
+    public void CanChangeDirection()
+    {
+        canMoveHorizontally = true;
+        isChangingDirection = false;
+
+        Transform arrowImageTransform = arrowTile.transform.Find("Arrow");
+
+        if (arrowImageTransform != null)
+        {
+            arrowImageTransform.rotation = Quaternion.Euler(0, 0, -180);
+        }
+    }
+
     public void ShowLosePanel()
     {
         losePanel.SetActive(true);
@@ -127,26 +148,74 @@ public class GameManagement : MonoBehaviour
 
     public void MoveArrowTile()
     {
-        if (arrowPositionIndex < gridContainer.childCount - 1)
+        if (isMoving || isChangingDirection)
+            return;
+
+        int nextPositionIndex = arrowPositionIndex + 1;
+        if (nextPositionIndex >= gridContainer.childCount)
+            return;
+
+        Transform nextPositionTransform = gridContainer.GetChild(nextPositionIndex);
+
+        if (nextPositionTransform.TryGetComponent<GridManager>(out var gridManager))
         {
-            Transform targetTransform = gridContainer.GetChild(arrowPositionIndex + 1);
-            if (targetTransform.position.y > arrowTile.transform.position.y)
+            Vector3 targetPosition = nextPositionTransform.position;
+            int currentLevel = PlayerPrefs.GetInt("CurrentLevel", 1);
+
+            if (currentLevel == 1 || currentLevel == 2)
             {
-                arrowPositionIndex++;
-                StartCoroutine(MoveArrowCoroutine(targetTransform.position, () =>
+                if (Mathf.Approximately(targetPosition.x, arrowTile.transform.position.x) && targetPosition.y > arrowTile.transform.position.y)
                 {
-                    if (targetTransform.GetComponent<GridManager>().type == GridManager.TileType.Destination)
+                    MoveArrowToPosition(nextPositionIndex, targetPosition, gridManager, 0.5f);
+                }
+            }
+            else if (currentLevel == 3)
+            {
+                if (canMoveHorizontally)
+                {
+                    if (Mathf.Approximately(targetPosition.y, arrowTile.transform.position.y) && targetPosition.x > arrowTile.transform.position.x)
                     {
-                        ShowWinPanel();
+                        MoveArrowToPosition(nextPositionIndex, targetPosition, gridManager, 0.3f); // faster speed
                     }
-                }));
+                }
+                else if (Mathf.Approximately(arrowTile.transform.position.x, gridContainer.GetChild(0).position.x))
+                {
+                    if (Mathf.Approximately(targetPosition.x, arrowTile.transform.position.x) && targetPosition.y > arrowTile.transform.position.y)
+                    {
+                        MoveArrowToPosition(nextPositionIndex, targetPosition, gridManager, 0.5f);
+                    }
+                }
             }
         }
     }
 
-    IEnumerator MoveArrowCoroutine(Vector3 targetPosition, System.Action onMoveComplete)
+    private void MoveArrowToPosition(int nextPositionIndex, Vector3 targetPosition, GridManager gridManager, float duration)
     {
-        float duration = 0.5f;
+        if (gridManager.type == GridManager.TileType.Destination)
+        {
+            StartCoroutine(MoveArrowCoroutine(targetPosition, ShowWinPanel, duration));
+            arrowPositionIndex = nextPositionIndex;
+        }
+        else if (gridManager.type == GridManager.TileType.Obstacle)
+        {
+            Debug.Log("Encountered an obstacle, stopping movement.");
+        }
+        else if (gridManager.type == GridManager.TileType.Step)
+        {
+            arrowPositionIndex++;
+            StartCoroutine(MoveArrowCoroutine(targetPosition, MoveArrowTile, duration));
+        }
+        else if (gridManager.type == GridManager.TileType.ChangeDirection)
+        {
+            arrowPositionIndex++;
+            isChangingDirection = true;
+            StartCoroutine(MoveArrowCoroutine(targetPosition, CanChangeDirection, 1f));
+        }
+    }
+
+    IEnumerator MoveArrowCoroutine(Vector3 targetPosition, System.Action onMoveComplete, float duration)
+    {
+        isMoving = true;
         Vector3 startPosition = arrowTile.transform.position;
         float elapsed = 0;
 
@@ -158,13 +227,18 @@ public class GameManagement : MonoBehaviour
         }
 
         arrowTile.transform.position = targetPosition;
+        isMoving = false;
         onMoveComplete?.Invoke();
+    }
+
+    public void CheckArrowMovement()
+    {
+        MoveArrowTile();
     }
 
     public void ResetGame()
     {
         SetupGame();
-        arrowTile.GetComponent<Button>().onClick.AddListener(MoveArrowTile);
     }
 
     public void NextLevel(int levelId)
