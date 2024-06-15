@@ -14,27 +14,32 @@ public class LevelManager : MonoBehaviour
             int levelNumber = i + 1;
             //Image lockImage = levelButtons[i].GetComponentInChildren<Image>();
             TextMeshProUGUI levelText = levelButtons[i].GetComponentInChildren<TextMeshProUGUI>();
+            GameObject starObject = levelButtons[i].transform.Find("Star").gameObject;
+            bool isUnlocked = PlayerPrefs.GetInt("Level" + levelNumber + "Unlocked", 0) == 1;
+            bool isCompleted = PlayerPrefs.GetInt("Level" + levelNumber + "Completed", 0) == 1;
 
             if (levelText != null /*&& lockImage != null*/)
             {
                 if (levelNumber == 1)
                 {
                     levelText.text = levelNumber.ToString();
+                    starObject.SetActive(isCompleted);
                 }
                 else
                 {
-                    bool isUnlocked = PlayerPrefs.GetInt("Level" + levelNumber + "Unlocked", 0) == 1;
 
                     if (isUnlocked)
                     {
                         /*lockImage.gameObject.SetActive(false);
                         levelText.gameObject.SetActive(true);*/
                         levelText.text = levelNumber.ToString();
+                        starObject.SetActive(isCompleted);
                     }
                     else
                     {
                         /*lockImage.gameObject.SetActive(true);*/
                         levelText.gameObject.SetActive(false);
+                        starObject.SetActive(false);
                     }
                 }
             }

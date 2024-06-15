@@ -6,6 +6,9 @@ TagManager:
   tags:
   - Move
   - Destination
+  - Obstacle
+  - Step
+  - ChangeDirction
   layers:
   - Default
   - TransparentFX

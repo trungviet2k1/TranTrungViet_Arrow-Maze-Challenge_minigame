@@ -68,6 +68,7 @@ public class GameManagement : MonoBehaviour
         {
             arrowTile = Instantiate(arrowTilePrefab, gridContainer.GetChild(arrowPositionIndex + 1).position, Quaternion.identity, gridContainer);
             arrowTile.GetComponent<Button>().onClick.AddListener(CheckArrowMovement);
+            CheckObstacle();
         }
 
         winPanel.SetActive(false);
@@ -120,6 +121,7 @@ public class GameManagement : MonoBehaviour
         int currentLevel = PlayerPrefs.GetInt("CurrentLevel", 1);
         int nextLevel = currentLevel + 1;
         PlayerPrefs.SetInt("Level" + nextLevel + "Unlocked", 1);
+        PlayerPrefs.SetInt("Level" + currentLevel + "Completed", 1);
         PlayerPrefs.Save();
     }
 
@@ -133,6 +135,19 @@ public class GameManagement : MonoBehaviour
         if (arrowImageTransform != null)
         {
             arrowImageTransform.rotation = Quaternion.Euler(0, 0, -180);
+        }
+    }
+
+    public void CheckObstacle()
+    {
+        if (arrowPositionIndex >= 0 && !isMoving)
+        {
+            Transform nextPositionTransform = gridContainer.GetChild(arrowPositionIndex + 1);
+            if (nextPositionTransform.TryGetComponent<GridManager>(out var aboveGridManager) && aboveGridManager.type == GridManager.TileType.Obstacle)
+            {
+                Debug.Log("Encountered an obstacle above, stopping movement.");
+                return;
+            }
         }
     }
 
@@ -156,9 +171,14 @@ public class GameManagement : MonoBehaviour
             return;
 
         Transform nextPositionTransform = gridContainer.GetChild(nextPositionIndex);
-
         if (nextPositionTransform.TryGetComponent<GridManager>(out var gridManager))
         {
+            if (gridManager.type == GridManager.TileType.Obstacle)
+            {
+                Debug.Log("Encountered an obstacle, stopping movement.");
+                return;
+            }
+
             Vector3 targetPosition = nextPositionTransform.position;
             int currentLevel = PlayerPrefs.GetInt("CurrentLevel", 1);
 
@@ -175,7 +195,7 @@ public class GameManagement : MonoBehaviour
                 {
                     if (Mathf.Approximately(targetPosition.y, arrowTile.transform.position.y) && targetPosition.x > arrowTile.transform.position.x)
                     {
-                        MoveArrowToPosition(nextPositionIndex, targetPosition, gridManager, 0.3f); // faster speed
+                        MoveArrowToPosition(nextPositionIndex, targetPosition, gridManager, 0.1f);
                     }
                 }
                 else if (Mathf.Approximately(arrowTile.transform.position.x, gridContainer.GetChild(0).position.x))
@@ -196,10 +216,6 @@ public class GameManagement : MonoBehaviour
             StartCoroutine(MoveArrowCoroutine(targetPosition, ShowWinPanel, duration));
             arrowPositionIndex = nextPositionIndex;
         }
-        else if (gridManager.type == GridManager.TileType.Obstacle)
-        {
-            Debug.Log("Encountered an obstacle, stopping movement.");
-        }
         else if (gridManager.type == GridManager.TileType.Step)
         {
             arrowPositionIndex++;
@@ -209,7 +225,7 @@ public class GameManagement : MonoBehaviour
         {
             arrowPositionIndex++;
             isChangingDirection = true;
-            StartCoroutine(MoveArrowCoroutine(targetPosition, CanChangeDirection, 1f));
+            StartCoroutine(MoveArrowCoroutine(targetPosition, CanChangeDirection, 0.5f));
         }
     }
 

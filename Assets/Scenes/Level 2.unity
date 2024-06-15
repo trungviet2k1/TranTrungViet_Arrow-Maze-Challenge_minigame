@@ -1709,6 +1709,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1144005531}
   - component: {fileID: 1144005533}
+  - component: {fileID: 1144005534}
   m_Layer: 0
   m_Name: GameManager
   m_TagString: Untagged
@@ -1752,6 +1753,21 @@ MonoBehaviour:
   nextBtn: {fileID: 20550749}
   gridContainer: {fileID: 1237399783}
   arrowTilePrefab: {fileID: 163734074558611033, guid: 51169941eae6b044b9680bcb5f19fcd8, type: 3}
+--- !u!114 &1144005534
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1144005530}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6337c48a013a12648be327ebd72252c9, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  obstacleButton: {fileID: 5771086361608362820, guid: 70b8b285aec36d94e84565fc848d2fa2, type: 3}
+  gridContainer: {fileID: 1237399783}
+  moveRange: 1
 --- !u!1 &1200484692
 GameObject:
   m_ObjectHideFlags: 0
@@ -1964,7 +1980,6 @@ MonoBehaviour:
   stepPrefab: {fileID: 9056889445536530892, guid: 1666f85c97918514e99ecc4279c1871f, type: 3}
   obstaclePrefab: {fileID: 314892634916011354, guid: 70b8b285aec36d94e84565fc848d2fa2, type: 3}
   changeDirectionPrefab: {fileID: 163734074558611033, guid: 699f82c664404d24792b28cad670d68b, type: 3}
-  arrowTilePrefab: {fileID: 163734074558611033, guid: 51169941eae6b044b9680bcb5f19fcd8, type: 3}
 --- !u!1 &1304313814
 GameObject:
   m_ObjectHideFlags: 0
